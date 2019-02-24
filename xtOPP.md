@@ -17,3 +17,106 @@
     
 # 编码表示方法
 - ASCII-american standard code for information interchange
+    - 所有控制字符（包括回车，删除等）编码在0-31范围以及127
+    - 所有标点符号，英文大小写放在32-126之间
+    - 预留128-255之间位置
+    - 0xxx xxxx是它的编码形式
+- Latin1
+    - 0-127的所有位置不动，那么可以兼容ASCII，二进制位0xxx xxxx
+    - 128-255位置全部用完，二进制位1xxx xxxx
+        - 128-159之间为控制字符
+        - 160-255位文字符号
+        -其中包括了西欧语言、希腊语、泰语、阿拉伯语、希伯来语
+    - 欧元符号
+- GBxxxxxxxx
+    - GB2312
+        - 如果一个字节中第一位为0，那么这就是一个ACSII字符
+        - 如果一个字节中第一位为1，那么这个是汉字，认定需要2个字节才能表示一个编码的文字
+        - 这个码表中包含汉字6743个和非汉字图形字符682个
+        - 还有很多的空间没有用到，索性全部预留
+        - 0xxxxxxxx：表示为ACSII字符
+        - 1xxxxxxx xxxxxxxx：表示为汉字
+    - GBK
+        - 在GB2312基础上添加汉字
+        - 兼任GB2312和ASCII
+        - 0xxxxxxx：表示为ASCII字符
+        - 1xxxxxxx xxxxxxxx：表示为汉字
+    - GB18030
+        - 2/4位混编
+        
+# Unicode编码
+    - 只是一个码表，具体实现没有规定
+    - 0-0x10ffff来映射这些字符，最多可以容纳1114112个字符
+    - 中文的编码范围为4E00-9FCF，其中9FC4-9FCF之间的区间没有使用
+    - 上述区间全部是汉字，不包含全角字符，不包含特殊文字
+    - UTF=UnicodeTransformationFormat
+    - UTF-8
+    
+            不同字符表达方式不同，占用1-6个字节，没记
+            
+    - UTF-16， UTF-32
+        - UTF-16 早期Unicode历史遗留问题
+        - UTF-32 浪费空间
+
+- UCS-2
+    - UCS=UniversalCharacterSet，通用字符集
+    - UCS-2与Unicode相同
+    - 采用2个字节，定长的表示每一个字符，所以总计可以表示2ˇ16个字符
+- UCS-4
+    - 第一个字节：表示组（group），最高位为0， 则有128个
+    - 第二个字节：表示平面（plane），256个
+    - 第三个字节：表示行（row），256个
+    - 第四个字节：表示码位（cell），256个
+    - 如果UCS-4前两个字节为0，则就是UCS-2
+    
+# 常用概念
+    - 编码/解码：由人类可直接读取信息转换成bytes格式的，叫编码
+    - 大尾（BigEndian）和小尾（LittleEndian）
+        - ‘汉’-> 6C49
+        - 6C49-> BigEndian
+        - 496C ->LittleEndian
+- BOM
+    - UTF-8没有字节顺序
+    - UTF-16会出现问题
+        - “奎” -》 594E
+        - “乙” -》 4E59
+    - BOM-ByterOrderMark
+        - "ZERO WIDTH NO-BREAK SPACE" -> FEFF, 在UCS中不存在
+        - FEFF -> BigEndian
+        - FFFE -> LittleEndian
+        - UTF-8用来表示编码，FEFF的UTF-8编码是EF BB BF
+            用来表示此后编码是UTF-8编码
+# Python编码问题
+- str
+- bytes
+- bytearray
+
+            >>> b = bytes.fromhex('E4 B8 AD')
+            >>> b
+            b'\xe4\xb8\xad'
+            >>>b.decode('utf-8')
+            '中'
+            >>> str(b)
+            "   b'\\xe4\\xb8\\xa"
+            
+            - ord查看码位
+            >>> ord('A')
+            65
+            >>> chr(65)
+            'A'
+            
+- python文件默认utf-8编码，如果特殊需要，需要声明
+    - 放在第一行，或者第二行
+    - '''# -*- coding: windows-1252 -*-'''
+    - 读写文件默认utf-8，可以指定
+    - code point方式比较字符串，可能会带来问题
+        - 重音符号的表示
+        - 使用 unicodedata.normalize函数
+- Python源码中出现了解码错误，那么会产生SyntaxError异常
+- 其他情况下，如果发现编码解码错误，那么会产生UnicodeEncodeError
+ UnicodeDecodeError异常
+ 
+# 参考资料
+- https://www.cnblogs.com/jessonluo/p/4800331.html
+- https://blog.csdn.net/xuejianhui/article/details/525776771
+- https://tools.jb51.net/table/gb2312
